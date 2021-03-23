@@ -38,7 +38,7 @@ Windows PowerShell
 
 ## Download
 
-[Binary packages](https://github.com/oopsguy/m3u8/releases)
+[Binary packages](https://github.com/natz92/m3u8/releases)
 
 ## Screenshots
 
