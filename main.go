@@ -9,15 +9,17 @@ import (
 )
 
 var (
-	url      string
-	output   string
-	chanSize int
+	url            string
+	output         string
+	outputFileName string
+	chanSize       int
 )
 
 func init() {
 	flag.StringVar(&url, "u", "", "M3U8 URL, required")
 	flag.IntVar(&chanSize, "c", 25, "Maximum number of occurrences")
 	flag.StringVar(&output, "o", "", "Output folder, required")
+	flag.StringVar(&outputFileName, "f", "", "Output File Name")
 }
 
 func main() {
@@ -34,10 +36,13 @@ func main() {
 	if output == "" {
 		panicParameter("o")
 	}
+	if outputFileName == "" {
+		outputFileName = "merged"
+	}
 	if chanSize <= 0 {
 		panic("parameter 'c' must be greater than 0")
 	}
-	downloader, err := dl.NewTask(output, url)
+	downloader, err := dl.NewTask(output, outputFileName, url)
 	if err != nil {
 		panic(err)
 	}
