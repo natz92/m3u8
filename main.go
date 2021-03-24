@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 
 	"github.com/natz92/m3u8/dl"
@@ -11,18 +11,16 @@ import (
 )
 
 var (
-	url            string
-	yamlFile       string
-	output         string
-	outputFileName string
-	chanSize       int
+	yamlFile string
+	output   string
+	chanSize int
 )
 
 type FileInfo struct {
 	Url        string `yaml:"url"`
 	Id         string `yaml:"id"`
 	Name       string `yaml:"name"`
-	Downloaded bool   `yaml:downloaded`
+	Downloaded bool   `yaml:"downloaded"`
 }
 
 type FileInfos struct {
@@ -30,11 +28,9 @@ type FileInfos struct {
 }
 
 func init() {
-	flag.StringVar(&url, "u", "", "M3U8 URL, required")
 	flag.StringVar(&yamlFile, "i", "", "M3U8 yaml info, required")
 	flag.IntVar(&chanSize, "c", 25, "Maximum number of occurrences")
 	flag.StringVar(&output, "o", "", "Output folder, required")
-	flag.StringVar(&outputFileName, "f", "", "Output File Name")
 }
 
 func main() {
@@ -43,15 +39,12 @@ func main() {
 	flag.Parse()
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println("[error]", r)
+			log.Println("[error]", r)
 			os.Exit(-1)
 		}
 	}()
 	if yamlFile == "" {
 		panicParameter("i")
-	}
-	if outputFileName == "" {
-		outputFileName = "merged"
 	}
 	if chanSize <= 0 {
 		panic("parameter 'c' must be greater than 0")
@@ -61,31 +54,37 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// fmt.Printf("--- s\n:%s", yamlFile)
 	err = yaml.Unmarshal(yamlFile, &f)
 	if err != nil {
-		fmt.Printf("Unmarshal: %s", err)
+		log.Printf("Unmarshal: %s", err)
 	}
-	// fmt.Printf("--- t:\n%v\n\n", f)
 
 	for i, v := range f.Infos {
-		if v.Downloaded == true {
+		if v.Downloaded {
 			continue
 		}
-		fmt.Printf("%d, %s: Start.", i, v.Id)
+		log.Printf("%d, %s: Start.", i, v.Id)
 
 		downloader, err := dl.NewTask("output", v.Name, v.Url)
 		if err != nil {
-			panic(err)
+			log.Fatalln(err)
 		}
 		if err := downloader.Start(chanSize); err != nil {
-			panic(err)
+			log.Fatalln(err)
 		}
 
-		fmt.Printf("%d, %s: Done.", i, v.Id)
+		f.Infos[i].Downloaded = true
+		log.Printf("%d, %s: Done.", i, v.Id)
 	}
 
-	fmt.Println("\n\n All Done!")
+	d, err := yaml.Marshal(&f)
+	if err != nil {
+		log.Fatalf("error: %v", err)
+	}
+
+	err = ioutil.WriteFile("file_output.yaml", d, 0644)
+
+	log.Println("\n\n All Done!")
 }
 
 func panicParameter(name string) {

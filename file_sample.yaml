@@ -1,0 +1,5 @@
+files:
+  - url: http://devimages.apple.com/iphone/samples/bipbop/bipbopall.m3u8
+    id: bipbopall
+    name: Sample From Apple
+    downloaded: false
