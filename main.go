@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -20,6 +21,7 @@ type FileInfo struct {
 	Url        string `yaml:"url"`
 	Id         string `yaml:"id"`
 	Name       string `yaml:"name"`
+	Command    string `yaml:"command"`
 	Downloaded bool   `yaml:"downloaded"`
 }
 
@@ -50,16 +52,17 @@ func main() {
 		panic("parameter 'c' must be greater than 0")
 	}
 
-	yamlFile, err := ioutil.ReadFile(yamlFile)
+	loadYaml, err := ioutil.ReadFile(yamlFile)
 	if err != nil {
 		panic(err)
 	}
-	err = yaml.Unmarshal(yamlFile, &f)
+	err = yaml.Unmarshal(loadYaml, &f)
 	if err != nil {
 		log.Printf("Unmarshal: %s", err)
 	}
 
 	for i, v := range f.Infos {
+		f.Infos[i].Command = fmt.Sprintf("ffmpeg.exe -i \"C:\\Users\\tkddn\\Documents\\m3u8\\output\\%s.ts\" -map 0 -c copy \"%s.mp4\"", v.Name, v.Name)
 		if v.Downloaded {
 			continue
 		}
@@ -77,12 +80,13 @@ func main() {
 		log.Printf("%d, %s: Done.", i, v.Id)
 	}
 
+	yaml.FutureLineWrap()
 	d, err := yaml.Marshal(&f)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
 
-	err = ioutil.WriteFile("file_output.yaml", d, 0644)
+	err = ioutil.WriteFile(yamlFile, d, 0644)
 
 	log.Println("\n\n All Done!")
 }
